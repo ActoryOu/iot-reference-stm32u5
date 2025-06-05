@@ -55,30 +55,35 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}
           source tools/env_setup.sh
-      - name: Download and unzip IDE
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-        run: |
-          mkdir -p ~/cache
-          wget "${{ matrix.ide_pkg_url }}" -U "${{ matrix.user_agent }}"
-          unzip en.${IDE_PKG_NAME}.sh.zip
-          chmod +x ${IDE_PKG_NAME}.sh
-          ./${IDE_PKG_NAME}.sh --tar -xf ./${IDE_PKG_NAME}.tar.gz
-          mv ${IDE_PKG_NAME}.tar.gz ~/cache/
-      - name: Extract IDE
-        run: |
-          mkdir -p STM32CubeIDE
-          tar -xzf ~/cache/${IDE_PKG_NAME}.tar.gz --directory STM32CubeIDE
-      - name: Import Project and Build with STM32CubeIDE
-        shell: bash
-        run: |
-          export PATH=${PWD}/STM32CubeIDE:${PATH}
-          stm32cubeide --launcher.suppressErrors -nosplash -verbose \
-            -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
-            -data "${GITHUB_WORKSPACE}" \
-            -import "${GITHUB_WORKSPACE}/Projects/${{ matrix.project }}" \
-            -build "${{ matrix.project }}/.*"
-          echo "Listing artifacts: "
-          ls -1 "${{ github.workspace }}/Projects/${{ matrix.project }}/Debug/${{ matrix.project }}"*
+      - name: Build the binary
+        uses: xanderhendriks/action-build-stm32cubeide@v15.0
+        with:
+          project-path: "Projects/${{ matrix.project }}"
+          project-target: "${{ matrix.project }}/Debug"
+      # - name: Download and unzip IDE
+      #   if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      #   run: |
+      #     mkdir -p ~/cache
+      #     wget "${{ matrix.ide_pkg_url }}" -U "${{ matrix.user_agent }}"
+      #     unzip en.${IDE_PKG_NAME}.sh.zip
+      #     chmod +x ${IDE_PKG_NAME}.sh
+      #     ./${IDE_PKG_NAME}.sh --tar -xf ./${IDE_PKG_NAME}.tar.gz
+      #     mv ${IDE_PKG_NAME}.tar.gz ~/cache/
+      # - name: Extract IDE
+      #   run: |
+      #     mkdir -p STM32CubeIDE
+      #     tar -xzf ~/cache/${IDE_PKG_NAME}.tar.gz --directory STM32CubeIDE
+      # - name: Import Project and Build with STM32CubeIDE
+      #   shell: bash
+      #   run: |
+      #     export PATH=${PWD}/STM32CubeIDE:${PATH}
+      #     stm32cubeide --launcher.suppressErrors -nosplash -verbose \
+      #       -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
+      #       -data "${GITHUB_WORKSPACE}" \
+      #       -import "${GITHUB_WORKSPACE}/Projects/${{ matrix.project }}" \
+      #       -build "${{ matrix.project }}/.*"
+      #     echo "Listing artifacts: "
+      #     ls -1 "${{ github.workspace }}/Projects/${{ matrix.project }}/Debug/${{ matrix.project }}"*
       - name: Copy Artifacts
         shell: bash
         run: |
@@ -146,30 +151,35 @@ jobs:
           export PATH="$(realpath ~/scoop)/shims:${PATH}"
           cd ${GITHUB_WORKSPACE}
           source tools/env_setup.sh
-      - name: Download and unzip IDE
-        shell: bash
-        if: ${{ steps.cache-ide.outputs.cache-hit != 'true' }}
-        run: |
-          export PATH="$(realpath ~/scoop)/shims:${PATH}"
-          mkdir -p ~/cache
-          wget "${{ matrix.ide_pkg_url }}" -U "${{ matrix.user_agent }}"
-          7z x en.${{ matrix.ide_pkg_name }}.exe.zip
-          mv ${{ matrix.ide_pkg_name }}.exe ~/cache/${{ matrix.ide_pkg_name }}.exe
-      - name: Extract IDE
-        shell: bash
-        run: |
-          cd $GITHUB_WORKSPACE/../
-          7z x ~/cache/${{ matrix.ide_pkg_name }}.exe
-      - name: Import and Build
-        shell: cmd
-        run: |
-          cd %GITHUB_WORKSPACE%
-          cd ..
-          set PATH=%CD%\STM32CubeIDE;%PATH%
-          set PATH=%HOMEDRIVE%%HOMEPATH%\scoop\shims;%PATH%
-          .venv\Scripts\activate.bat
-          SET
-          stm32cubeidec --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data %GITHUB_WORKSPACE% -verbose -no-indexer -importAll %GITHUB_WORKSPACE%\Projects -cleanBuild "${{ matrix.project }}/.*"
+      - name: Build the binary
+        uses: xanderhendriks/action-build-stm32cubeide@v15.0
+        with:
+          project-path: "Projects/${{ matrix.project }}"
+          project-target: "${{ matrix.project }}/Debug"
+      # - name: Download and unzip IDE
+      #   shell: bash
+      #   if: ${{ steps.cache-ide.outputs.cache-hit != 'true' }}
+      #   run: |
+      #     export PATH="$(realpath ~/scoop)/shims:${PATH}"
+      #     mkdir -p ~/cache
+      #     wget "${{ matrix.ide_pkg_url }}" -U "${{ matrix.user_agent }}"
+      #     7z x en.${{ matrix.ide_pkg_name }}.exe.zip
+      #     mv ${{ matrix.ide_pkg_name }}.exe ~/cache/${{ matrix.ide_pkg_name }}.exe
+      # - name: Extract IDE
+      #   shell: bash
+      #   run: |
+      #     cd $GITHUB_WORKSPACE/../
+      #     7z x ~/cache/${{ matrix.ide_pkg_name }}.exe
+      # - name: Import and Build
+      #   shell: cmd
+      #   run: |
+      #     cd %GITHUB_WORKSPACE%
+      #     cd ..
+      #     set PATH=%CD%\STM32CubeIDE;%PATH%
+      #     set PATH=%HOMEDRIVE%%HOMEPATH%\scoop\shims;%PATH%
+      #     .venv\Scripts\activate.bat
+      #     SET
+      #     stm32cubeidec --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data %GITHUB_WORKSPACE% -verbose -no-indexer -importAll %GITHUB_WORKSPACE%\Projects -cleanBuild "${{ matrix.project }}/.*"
       - name: Copy Artifacts
         shell: bash
         run: |
